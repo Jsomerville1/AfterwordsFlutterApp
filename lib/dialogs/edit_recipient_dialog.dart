@@ -1,5 +1,3 @@
-// lib/dialogs/edit_recipient_dialog.dart
-
 import 'package:flutter/material.dart';
 import '../models/recipient.dart';
 import '../models/edit_recipient_request.dart';
@@ -11,14 +9,17 @@ class EditRecipientDialog extends StatefulWidget {
   const EditRecipientDialog({super.key, required this.recipient});
 
   @override
-  _EditRecipientDialogState createState() => _EditRecipientDialogState();
+  State<EditRecipientDialog> createState() => _EditRecipientDialogState();
 }
 
 class _EditRecipientDialogState extends State<EditRecipientDialog> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+
   final ApiService _apiService = ApiService();
+
   bool _isLoading = false;
+  String _errorMessage = '';
 
   @override
   void initState() {
@@ -27,40 +28,44 @@ class _EditRecipientDialogState extends State<EditRecipientDialog> {
     _emailController.text = widget.recipient.recipientEmail;
   }
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    super.dispose();
+  }
+
   void _editRecipient() async {
+    setState(() {
+      _errorMessage = '';
+      _isLoading = true;
+    });
+
     String name = _nameController.text.trim();
     String email = _emailController.text.trim();
 
     if (name.isEmpty || email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('All fields are required')),
-      );
+      setState(() {
+        _errorMessage = 'All fields are required.';
+        _isLoading = false;
+      });
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
-
-    EditRecipientRequest request = EditRecipientRequest(
-      recipientId: widget.recipient.recipientId,
-      messageId: widget.recipient.messageId,
-      recipientName: name,
-      recipientEmail: email,
-    );
-
     try {
+      EditRecipientRequest request = EditRecipientRequest(
+        recipientId: widget.recipient.recipientId,
+        messageId: widget.recipient.messageId, // Add this line
+        recipientName: name,
+        recipientEmail: email,
+      );
       await _apiService.editRecipient(request);
-      widget.recipient.recipientName = name;
-      widget.recipient.recipientEmail = email;
       Navigator.pop(context, true);
     } catch (e) {
       setState(() {
+        _errorMessage = e.toString();
         _isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error editing recipient: ${e.toString()}')),
-      );
     }
   }
 
@@ -68,27 +73,49 @@ class _EditRecipientDialogState extends State<EditRecipientDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Edit Recipient'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _nameController,
-            decoration: const InputDecoration(hintText: 'Recipient Name'),
-          ),
-          TextField(
-            controller: _emailController,
-            decoration: const InputDecoration(hintText: 'Recipient Email'),
-          ),
-        ],
+      content: SingleChildScrollView(
+        child: Column(
+          children: [
+            // Recipient Name
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                hintText: 'Recipient Name',
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Recipient Email
+            TextField(
+              controller: _emailController,
+              decoration: const InputDecoration(
+                hintText: 'Recipient Email',
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Error Message
+            Text(
+              _errorMessage,
+              style: const TextStyle(color: Colors.red),
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(
-          onPressed: _isLoading ? null : () => Navigator.pop(context, false),
+          onPressed: _isLoading ? null : () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
         TextButton(
           onPressed: _isLoading ? null : _editRecipient,
-          child: _isLoading ? const CircularProgressIndicator() : const Text('Save'),
+          child: _isLoading
+              ? const SizedBox(
+                  height: 16.0,
+                  width: 16.0,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.0,
+                  ),
+                )
+              : const Text('Save'),
         ),
       ],
     );

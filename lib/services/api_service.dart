@@ -1,7 +1,12 @@
 // lib/services/api_service.dart
 
 import 'dart:convert';
+import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
+import '../models/check_in_response.dart';
+import '../models/document.dart';
+import '../models/recipient.dart';
+import '../models/recipient_response.dart';
 import '../models/user.dart';
 import '../network/generic_response.dart';
 import '../models/register_request.dart';
@@ -112,15 +117,15 @@ class ApiService {
 
   // Add Message
   Future<void> addMessage(AddMessageRequest request) async {
-    final url = Uri.parse('$baseUrl/api/addmessage');
+    final url = Uri.parse('$baseUrl/api/addMessage');
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(request.toJson()),
     );
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to add message');
+    if (response.statusCode != 201) {
+      throw Exception('Failed to add message: ${response.body}');
     }
   }
 
@@ -140,7 +145,7 @@ class ApiService {
 
   // Delete Message
   Future<void> deleteMessage(int messageId, int userId) async {
-    final url = Uri.parse('$baseUrl/api/deletemessage');
+    final url = Uri.parse('$baseUrl/api/deleteMessage');
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
@@ -162,7 +167,8 @@ class ApiService {
     );
 
     if (response.statusCode != 201) {
-      throw Exception('Failed to add recipient');
+      final errorResponse = jsonDecode(response.body);
+      throw Exception(errorResponse['error'] ?? 'Failed to add recipient');
     }
   }
 
@@ -179,6 +185,7 @@ class ApiService {
       throw Exception('Failed to edit recipient');
     }
   }
+
 
   // Delete Recipient
   Future<void> deleteRecipient(int recipientId) async {
@@ -206,8 +213,6 @@ class ApiService {
         body: jsonEncode({'UserId': userId}),
       );
 
-      print("Check-In API Response Status: ${response.statusCode}");
-      print("Check-In API Response Body: ${response.body}");
 
       if (response.statusCode == 200) {
         return CheckInResponse.fromJson(jsonDecode(response.body));
@@ -215,37 +220,110 @@ class ApiService {
         throw Exception('Failed to check in. Status Code: ${response.statusCode}');
       }
     } catch (e) {
-      print("Error in ApiService.checkInUser(): $e");
-      rethrow;
+        return CheckInResponse(error: 'Error: $e', message: '');
+    }
+  }
+  // Fetch User Recipients
+  Future<RecipientResponse> getUserRecipients(int userId) async {
+    final url = Uri.parse('$baseUrl/api/recipients');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'userId': userId}),
+    );
+
+    if (response.statusCode == 200) {
+      return RecipientResponse.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to fetch recipients');
+    }
+  }
+  // Fetch recipients by user ID
+  Future<List<Recipient>> getRecipientsByUserId(int userId) async {
+    final url = Uri.parse('$baseUrl/api/recipients');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'userId': userId}),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return (data['recipients'] as List)
+          .map((e) => Recipient.fromJson(e))
+          .toList();
+    } else {
+      throw Exception('Failed to fetch recipients');
+    }
+  }
+  // Add Document (Upload PDF)
+  Future<void> addDocument({
+    required int userId,
+    required String recipientName,
+    required String recipientEmail,
+    required String title, // New parameter
+    required PlatformFile pdfFile,
+  }) async {
+    var uri = Uri.parse('$baseUrl/api/uploadPdf'); // Corrected endpoint
+    var request = http.MultipartRequest('POST', uri);
+
+    request.fields['userId'] = userId.toString();
+    request.fields['recipientName'] = recipientName;
+    request.fields['recipientEmail'] = recipientEmail;
+    request.fields['title'] = title; // Include the title
+
+    if (pdfFile.path != null) {
+      request.files.add(await http.MultipartFile.fromPath(
+        'pdfFile',
+        pdfFile.path!,
+        filename: pdfFile.name,
+      ));
+    }
+
+    var streamedResponse = await request.send();
+
+    var response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode != 201) {
+      var responseBody = response.body;
+      throw Exception('Failed to upload PDF: $responseBody');
+    }
+  }
+  // Fetch user documents
+  Future<List<Document>> getUserDocuments(int userId) async {
+    final url = Uri.parse('$baseUrl/api/getUserDocuments');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'userId': userId}),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return (data['documents'] as List)
+          .map((e) => Document.fromJson(e))
+          .toList();
+    } else {
+      throw Exception('Failed to fetch documents');
     }
   }
 
-
-
-// Add other API methods as needed
-}
-
-// Define a CheckInResponse model
-class CheckInResponse {
-  final String message;
-  final dynamic result; // Adjust type based on your server response
-  final String? error;
-
-  CheckInResponse({
-    required this.message,
-    this.result,
-    this.error,
-  });
-
-  factory CheckInResponse.fromJson(Map<String, dynamic> json) {
-    return CheckInResponse(
-      message: json['message'],
-      result: json['result'],
-      error: json['error'],
+  // Delete Document
+  Future<void> deleteDocument(int documentId) async {
+    final url = Uri.parse('$baseUrl/api/deleteDocument');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'documentId': documentId}),
     );
-  }
-}
 
+    if (response.statusCode != 200) {
+      var responseBody = response.body;
+      throw Exception('Failed to delete document: $responseBody');
+    }
+  }
+
+}
 // Define a DeleteUserResponse model
 class DeleteUserResponse {
   final String? error;
@@ -262,4 +340,5 @@ class DeleteUserResponse {
       message: json['message'],
     );
   }
+
 }

@@ -1,40 +1,14 @@
-// lib/main.dart
-
 import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
-import 'screens/user_profile_screen.dart';
 import 'utils/shared_pref_manager.dart';
-import 'screens/message_screen.dart';
-import 'package:home_widget/home_widget.dart';
-import 'utils/widget_helper.dart';
+import 'screens/main_screen.dart';
+import 'screens/upload_pdf_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SharedPrefManager().init();
 
-  try {
-    await HomeWidget.initiallyLaunchedFromHomeWidget(); // Initialize the home_widget plugin
-    print("HomeWidget initialized successfully.");
-  } catch (e) {
-    print("Error initializing homewidget: $e");
-  }
-    runApp(MyApp());
-
-
-
-  // Listen for widget clicks
-  HomeWidget.widgetClicked.listen((Uri? uri) {
-    if (uri != null) {
-      print("Widget clicked with URI: $uri");
-      if (uri.toString() == 'homewidget://checkin') {
-        // Perform the check-in action
-        print("Triggering WidgetHelper.handleCheckIn()");
-        WidgetHelper.handleCheckIn();
-      }
-    }
-  }, onError: (error) {
-    print("Error listening to widget clicks: $error");
-  });
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -45,12 +19,39 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = _sharedPrefManager.getUser();
+
+    // Define the dark theme
+    final ThemeData darkTheme = ThemeData(
+      brightness: Brightness.dark,
+      primaryColor: Colors.black,
+      scaffoldBackgroundColor: Colors.black,
+      hintColor: Colors.white,
+      appBarTheme: const AppBarTheme(
+        color: Colors.black,
+      ),
+      textTheme: const TextTheme(
+        bodyLarge: TextStyle(color: Colors.white),
+        bodyMedium: TextStyle(color: Colors.white),
+        bodySmall: TextStyle(color: Colors.white70),
+      ),
+      iconTheme: const IconThemeData(
+        color: Colors.white,
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: Colors.black,
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.grey,
+      ),
+    );
+
     return MaterialApp(
       title: 'AfterWords App',
-      home: user != null ? const UserProfileScreen() : const LoginScreen(),
+      theme: darkTheme,
+      home: user != null ? const MainScreen() : const LoginScreen(),
       routes: {
-        '/messages': (context) => const MessageScreen(),
-        // Add other routes as needed
+        '/login': (context) => const LoginScreen(),
+        '/uploadPdf': (context) => const UploadPdfScreen(),
+        // Add other routes if needed
       },
     );
   }

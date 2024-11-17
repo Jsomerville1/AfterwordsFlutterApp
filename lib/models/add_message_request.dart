@@ -1,5 +1,3 @@
-// lib/models/add_message_request.dart
-
 class AddMessageRequest {
   final int userId;
   final String content;

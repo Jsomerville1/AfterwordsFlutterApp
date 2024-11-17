@@ -1,11 +1,8 @@
-// lib/screens/user_profile_screen.dart
-
 import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../services/api_service.dart';
 import '../utils/shared_pref_manager.dart';
 import 'login_screen.dart';
-import 'message_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -34,14 +31,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         );
       });
     }
-  }
-
-  // Implement the _viewMessages method
-  void _viewMessages() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const MessageScreen()),
-    );
   }
 
   void _logout() async {
@@ -104,7 +93,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
-  // New method to handle Check In
   void _checkInUser() async {
     if (_user == null) return;
 
@@ -113,7 +101,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     });
 
     try {
-      CheckInResponse response = await _apiService.checkInUser(_user!.id);
+      final response = await _apiService.checkInUser(_user!.id);
 
       if (response.error == null || response.error!.isEmpty) {
         // Update the user data locally
@@ -151,7 +139,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   @override
   Widget build(BuildContext context) {
     if (_user == null) {
-      // Show a loading indicator or a blank screen while redirecting
+      // Show a loading indicator while redirecting
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
@@ -160,6 +148,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('User Profile'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _logout,
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -190,13 +184,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             const SizedBox(height: 16),
             // Buttons
             ElevatedButton(
-              onPressed: _viewMessages,
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-              child: const Text('Messages'),
-            ),
-            const SizedBox(height: 8),
-            ElevatedButton(
-              onPressed: _checkInUser,
+              onPressed: _isCheckingIn ? null : _checkInUser,
               style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
               child: _isCheckingIn
                   ? const SizedBox(
@@ -221,7 +209,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               child: const Text('Delete Account'),
             ),
-            // Optional: Display additional messages or errors here
           ],
         ),
       ),

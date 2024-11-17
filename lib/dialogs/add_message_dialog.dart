@@ -1,5 +1,3 @@
-// lib/dialogs/add_message_dialog.dart
-
 import 'package:flutter/material.dart';
 import '../models/add_message_request.dart';
 import '../models/user.dart';
@@ -33,16 +31,19 @@ class _AddMessageDialogState extends State<AddMessageDialog> {
       _isLoading = true;
     });
 
+
     User? user = _sharedPrefManager.getUser();
     if (user == null) {
       Navigator.pop(context, false);
       return;
     }
 
-    AddMessageRequest request = AddMessageRequest(userId: user.id, content: content);
+    AddMessageRequest request =
+        AddMessageRequest(userId: user.id, content: content);
 
     try {
       await _apiService.addMessage(request);
+      // Optionally, navigate to add recipient dialog
       Navigator.pop(context, true);
     } catch (e) {
       setState(() {
@@ -70,7 +71,9 @@ class _AddMessageDialogState extends State<AddMessageDialog> {
         ),
         TextButton(
           onPressed: _isLoading ? null : _addMessage,
-          child: _isLoading ? const CircularProgressIndicator() : const Text('Add'),
+          child: _isLoading
+              ? const CircularProgressIndicator()
+              : const Text('Add'),
         ),
       ],
     );

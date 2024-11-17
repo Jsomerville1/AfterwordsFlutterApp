@@ -1,5 +1,3 @@
-// lib/dialogs/edit_message_dialog.dart
-
 import 'package:flutter/material.dart';
 import '../models/message.dart';
 import '../models/edit_message_request.dart';
@@ -47,7 +45,6 @@ class _EditMessageDialogState extends State<EditMessageDialog> {
 
     try {
       await _apiService.editMessage(request);
-      widget.message.content = content; // Update the local message content
       Navigator.pop(context, true);
     } catch (e) {
       setState(() {
@@ -75,7 +72,9 @@ class _EditMessageDialogState extends State<EditMessageDialog> {
         ),
         TextButton(
           onPressed: _isLoading ? null : _editMessage,
-          child: _isLoading ? const CircularProgressIndicator() : const Text('Save'),
+          child: _isLoading
+              ? const CircularProgressIndicator()
+              : const Text('Save'),
         ),
       ],
     );
