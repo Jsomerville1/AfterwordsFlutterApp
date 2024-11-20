@@ -117,14 +117,15 @@ class ApiService {
 
   // Add Message
   Future<void> addMessage(AddMessageRequest request) async {
-    final url = Uri.parse('$baseUrl/api/addMessage');
+    final url = Uri.parse('$baseUrl/api/addmessage');
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(request.toJson()),
     );
 
-    if (response.statusCode != 201) {
+    if (response.statusCode != 201 && response.statusCode != 200) {
+      // Accept both 200 and 201 as success based on server implementation
       throw Exception('Failed to add message: ${response.body}');
     }
   }
@@ -322,6 +323,25 @@ class ApiService {
       throw Exception('Failed to delete document: $responseBody');
     }
   }
+
+  // Update Check-In Frequency
+  Future<GenericResponse> updateCheckInFreq(int userId, int checkInFreq) async {
+    final url = Uri.parse('$baseUrl/api/checkin-frequency');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'userId': userId, 'CheckInFreq': checkInFreq}),
+    );
+
+    if (response.statusCode == 200) {
+      return GenericResponse.fromJson(jsonDecode(response.body));
+    } else {
+      final errorResponse = jsonDecode(response.body);
+      throw Exception(errorResponse['error'] ?? 'Failed to update Check-In Frequency');
+    }
+  }
+
+
 
 }
 // Define a DeleteUserResponse model

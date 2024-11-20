@@ -27,8 +27,8 @@ class SharedPrefManager {
   User? getUser() {
     String? userJson = _prefs?.getString('user');
     if (userJson != null) {
-      Map<String, dynamic> userMap = jsonDecode(userJson);
-      return User.fromJson(userMap);
+      return User.fromJson(jsonDecode(userJson)); // Parse the user data.
+
     }
     return null;
   }

@@ -14,24 +14,34 @@ class UserProfileScreen extends StatefulWidget {
 class _UserProfileScreenState extends State<UserProfileScreen> {
   final SharedPrefManager _sharedPrefManager = SharedPrefManager();
   final ApiService _apiService = ApiService();
-
   User? _user;
-  bool _isCheckingIn = false;
+
+  final Map<String, int> _checkInOptions = {
+    '2 Minutes': 120,
+    '1 Week': 604800,
+    '1 Month': 2592000,
+    '1 Year': 31536000,
+  };
+
+  String? _selectedFrequency;
 
   @override
   void initState() {
     super.initState();
     _user = _sharedPrefManager.getUser();
     if (_user == null) {
-      // User not logged in, navigate to LoginScreen
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-        );
+        Navigator.pushReplacementNamed(context, '/login');
       });
+    } else {
+      _selectedFrequency = _checkInOptions.keys.firstWhere(
+            (key) => _checkInOptions[key] == _user!.checkInFreq,
+        orElse: () => '2 Minutes',
+      );
     }
   }
+
+
 
   void _logout() async {
     await _sharedPrefManager.clearUser();
@@ -93,53 +103,34 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
-  void _checkInUser() async {
+
+  void _updateCheckInFreq(int newFreq) async {
     if (_user == null) return;
 
-    setState(() {
-      _isCheckingIn = true;
-    });
-
     try {
-      final response = await _apiService.checkInUser(_user!.id);
+      final response = await _apiService.updateCheckInFreq(_user!.id, newFreq);
 
-      if (response.error == null || response.error!.isEmpty) {
-        // Update the user data locally
+      if (response.error == null) {
         setState(() {
-          _user = User(
-            id: _user!.id,
-            firstName: _user!.firstName,
-            lastName: _user!.lastName,
-            username: _user!.username,
-            email: _user!.email,
-            checkInFreq: _user!.checkInFreq + 1,
-            verified: _user!.verified,
-            deceased: _user!.deceased,
-            createdAt: _user!.createdAt,
-            lastLogin: DateTime.now(),
-            error: '',
-          );
+          _user = _user!.copyWith(checkInFreq: newFreq);
         });
-
-        await _sharedPrefManager.updateUser(_user!);
-
-        _showToast('You checked in successfully!');
+        _sharedPrefManager.updateUser(_user!);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Check-In Frequency updated successfully!')),
+        );
       } else {
-        _showToast('Check In failed: ${response.error}');
+        throw Exception(response.error);
       }
     } catch (e) {
-      _showToast('Error: ${e.toString()}');
-    } finally {
-      setState(() {
-        _isCheckingIn = false;
-      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error updating frequency: ${e.toString()}')),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     if (_user == null) {
-      // Show a loading indicator while redirecting
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
@@ -148,19 +139,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('User Profile'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _logout,
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // User Information
             Text(
               'Welcome, ${_user!.firstName} ${_user!.lastName}',
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
@@ -172,44 +156,45 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             const SizedBox(height: 8),
             Text('Email: ${_user!.email}'),
             const SizedBox(height: 8),
-            Text('Check-In Frequency: ${_user!.checkInFreq}'),
-            const SizedBox(height: 8),
-            Text('Verified: ${_user!.verified ? 'Yes' : 'No'}'),
-            const SizedBox(height: 8),
-            Text('Deceased: ${_user!.deceased == true ? 'Yes' : 'No'}'),
-            const SizedBox(height: 8),
-            Text('Account Created At: ${_user!.createdAt}'),
-            const SizedBox(height: 8),
-            Text('Last Login: ${_user!.lastLogin}'),
+            Text(
+              'Check-In Frequency: ${_selectedFrequency ?? '2 Minutes'}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 16),
-            // Buttons
-            ElevatedButton(
-              onPressed: _isCheckingIn ? null : _checkInUser,
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-              child: _isCheckingIn
-                  ? const SizedBox(
-                height: 16.0,
-                width: 16.0,
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  strokeWidth: 2.0,
-                ),
-              )
-                  : const Text('Check In'),
+            DropdownButtonFormField<String>(
+              value: _selectedFrequency,
+              items: _checkInOptions.keys.map((String key) {
+                return DropdownMenuItem<String>(
+                  value: key,
+                  child: Text(key),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  int newFreq = _checkInOptions[value]!;
+                  setState(() {
+                    _selectedFrequency = value;
+                  });
+                  _updateCheckInFreq(newFreq);
+                }
+              },
+              decoration: const InputDecoration(
+                labelText: 'Change Check-In Frequency',
+                border: OutlineInputBorder(),
+              ),
             ),
-            const SizedBox(height: 8),
-            ElevatedButton(
-              onPressed: _logout,
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
-              child: const Text('Logout'),
-            ),
-            const SizedBox(height: 8),
-            ElevatedButton(
-              onPressed: _deleteAccount,
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text('Delete Account'),
-            ),
-          ],
+        const SizedBox(height: 8),
+        ElevatedButton(
+          onPressed: _logout,
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
+          child: const Text('Logout'),
+        ),
+        const SizedBox(height: 8),
+        ElevatedButton(
+          onPressed: _deleteAccount,
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+          child: const Text('Delete Account'),
+        )],
         ),
       ),
     );

@@ -25,6 +25,34 @@ class User {
     required this.error,
   });
 
+  User copyWith({
+    int? id,
+    String? firstName,
+    String? lastName,
+    String? username,
+    String? email,
+    int? checkInFreq,
+    bool? verified,
+    bool? deceased,
+    DateTime? createdAt,
+    DateTime? lastLogin,
+    String? error,
+  }) {
+    return User(
+      id: id ?? this.id,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      username: username ?? this.username,
+      email: email ?? this.email,
+      checkInFreq: checkInFreq ?? this.checkInFreq,
+      verified: verified ?? this.verified,
+      deceased: deceased ?? this.deceased,
+      createdAt: createdAt ?? this.createdAt,
+      lastLogin: lastLogin ?? this.lastLogin,
+      error: error ?? this.error,
+    );
+  }
+
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['id'],

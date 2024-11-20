@@ -1,8 +1,8 @@
+import 'package:afterwords/screens/main_screen.dart';
 import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../services/api_service.dart';
 import '../utils/shared_pref_manager.dart';
-import 'user_profile_screen.dart';
 import 'register_screen.dart'; // Import the RegisterScreen
 
 class LoginScreen extends StatefulWidget {
@@ -57,7 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // Navigate to UserProfileScreen
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const UserProfileScreen()),
+          MaterialPageRoute(builder: (context) => const MainScreen()),
         );
       } else {
         setState(() {
