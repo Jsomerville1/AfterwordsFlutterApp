@@ -1,12 +1,19 @@
+// lib/dialogs/edit_recipient_dialog.dart
+
 import 'package:flutter/material.dart';
-import '../models/recipient.dart';
-import '../models/edit_recipient_request.dart';
 import '../services/api_service.dart';
 
 class EditRecipientDialog extends StatefulWidget {
-  final Recipient recipient;
+  final int recipientId;
+  final String recipientName;
+  final String recipientEmail;
 
-  const EditRecipientDialog({super.key, required this.recipient});
+  const EditRecipientDialog({
+    super.key,
+    required this.recipientId,
+    required this.recipientName,
+    required this.recipientEmail,
+  });
 
   @override
   State<EditRecipientDialog> createState() => _EditRecipientDialogState();
@@ -24,8 +31,8 @@ class _EditRecipientDialogState extends State<EditRecipientDialog> {
   @override
   void initState() {
     super.initState();
-    _nameController.text = widget.recipient.recipientName;
-    _emailController.text = widget.recipient.recipientEmail;
+    _nameController.text = widget.recipientName;
+    _emailController.text = widget.recipientEmail;
   }
 
   @override
@@ -53,19 +60,22 @@ class _EditRecipientDialogState extends State<EditRecipientDialog> {
     }
 
     try {
-      EditRecipientRequest request = EditRecipientRequest(
-        recipientId: widget.recipient.recipientId,
-        messageId: widget.recipient.messageId, // Add this line
+      // Assuming no messageId is needed when editing from RecipientsScreen
+      await _apiService.editRecipient(
+        recipientId: widget.recipientId,
         recipientName: name,
         recipientEmail: email,
+        // messageId: null, // Omitted
       );
-      await _apiService.editRecipient(request);
-      Navigator.pop(context, true);
+      Navigator.pop(context, true); // Indicate success
     } catch (e) {
       setState(() {
-        _errorMessage = e.toString();
+        _errorMessage = e.toString().replaceFirst('Exception: ', '');
         _isLoading = false;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error editing recipient: $_errorMessage')),
+      );
     }
   }
 
@@ -75,12 +85,14 @@ class _EditRecipientDialogState extends State<EditRecipientDialog> {
       title: const Text('Edit Recipient'),
       content: SingleChildScrollView(
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             // Recipient Name
             TextField(
               controller: _nameController,
               decoration: const InputDecoration(
                 hintText: 'Recipient Name',
+                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 8),
@@ -89,14 +101,17 @@ class _EditRecipientDialogState extends State<EditRecipientDialog> {
               controller: _emailController,
               decoration: const InputDecoration(
                 hintText: 'Recipient Email',
+                border: OutlineInputBorder(),
               ),
+              keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 16),
             // Error Message
-            Text(
-              _errorMessage,
-              style: const TextStyle(color: Colors.red),
-            ),
+            if (_errorMessage.isNotEmpty)
+              Text(
+                _errorMessage,
+                style: const TextStyle(color: Colors.red),
+              ),
           ],
         ),
       ),
@@ -109,12 +124,12 @@ class _EditRecipientDialogState extends State<EditRecipientDialog> {
           onPressed: _isLoading ? null : _editRecipient,
           child: _isLoading
               ? const SizedBox(
-                  height: 16.0,
-                  width: 16.0,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.0,
-                  ),
-                )
+            height: 16.0,
+            width: 16.0,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.0,
+            ),
+          )
               : const Text('Save'),
         ),
       ],

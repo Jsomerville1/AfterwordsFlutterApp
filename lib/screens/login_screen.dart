@@ -1,9 +1,12 @@
+// lib/screens/login_screen.dart
+
 import 'package:afterwords/screens/main_screen.dart';
 import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../services/api_service.dart';
 import '../utils/shared_pref_manager.dart';
 import 'register_screen.dart'; // Import the RegisterScreen
+import 'forgot_password_screen.dart'; // Import the ForgotPasswordScreen
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -54,7 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // Save user data to shared preferences
         await _sharedPrefManager.saveUser(user);
 
-        // Navigate to UserProfileScreen
+        // Navigate to MainScreen
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const MainScreen()),
@@ -77,6 +80,13 @@ class _LoginScreenState extends State<LoginScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const RegisterScreen()),
+    );
+  }
+
+  void _navigateToForgotPassword() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
     );
   }
 
@@ -132,6 +142,11 @@ class _LoginScreenState extends State<LoginScreen> {
             TextButton(
               onPressed: _navigateToRegister,
               child: const Text('Don\'t have an account? Register here.'),
+            ),
+            // Forgot Password Navigation
+            TextButton(
+              onPressed: _navigateToForgotPassword,
+              child: const Text('Forgot Password?'),
             ),
           ],
         ),

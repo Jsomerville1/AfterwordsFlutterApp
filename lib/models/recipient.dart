@@ -5,7 +5,7 @@ class Recipient {
   final int userId;
   String recipientName;
   String recipientEmail;
-  final int messageId;
+  final int? messageId; // Made optional
   final DateTime? createdAt;
 
   Recipient({
@@ -13,7 +13,7 @@ class Recipient {
     required this.userId,
     required this.recipientName,
     required this.recipientEmail,
-    required this.messageId,
+    this.messageId, // Optional parameter
     this.createdAt,
   });
 
@@ -23,7 +23,7 @@ class Recipient {
       userId: json['userId'],
       recipientName: json['recipientName'],
       recipientEmail: json['recipientEmail'],
-      messageId: json['messageId'],
+      messageId: json['messageId'], // Can be null
       createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
     );
   }
@@ -34,7 +34,7 @@ class Recipient {
       'userId': userId,
       'recipientName': recipientName,
       'recipientEmail': recipientEmail,
-      'messageId': messageId,
+      if (messageId != null) 'messageId': messageId,
       'createdAt': createdAt?.toIso8601String(),
     };
   }

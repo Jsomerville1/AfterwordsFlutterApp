@@ -7,10 +7,12 @@ import '../dialogs/edit_recipient_dialog.dart';
 
 class RecipientItem extends StatefulWidget {
   final Recipient recipient;
+  final VoidCallback onUpdate; // Add this callback to notify parent
 
   const RecipientItem({
     super.key,
     required this.recipient,
+    required this.onUpdate, // Ensure this is passed
   });
 
   @override
@@ -21,26 +23,30 @@ class _RecipientItemState extends State<RecipientItem> {
   final ApiService _apiService = ApiService();
 
   void _editRecipient() async {
-    bool result = await showDialog(
+    bool? result = await showDialog(
       context: context,
-      builder: (context) => EditRecipientDialog(recipient: widget.recipient),
+      builder: (context) => EditRecipientDialog(
+        recipientId: widget.recipient.recipientId,
+        recipientName: widget.recipient.recipientName,
+        recipientEmail: widget.recipient.recipientEmail,
+      ),
     );
 
     if (result == true) {
-      setState(() {}); // Refresh the recipient details
+      widget.onUpdate(); // Notify parent to refresh the list
     }
   }
 
   void _deleteRecipient() async {
     try {
       await _apiService.deleteRecipient(widget.recipient.recipientId);
-      setState(() {
-        // Remove the recipient from the list
-      });
-    } catch (e) {
-      // Handle error
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error deleting recipient: ${e.toString()}')),
+        const SnackBar(content: Text('Recipient deleted successfully')),
+      );
+      widget.onUpdate(); // Notify parent to refresh the list
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error deleting recipient: $e')),
       );
     }
   }
@@ -56,10 +62,12 @@ class _RecipientItemState extends State<RecipientItem> {
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: _editRecipient,
+            tooltip: 'Edit Recipient',
           ),
           IconButton(
             icon: const Icon(Icons.delete),
             onPressed: _deleteRecipient,
+            tooltip: 'Delete Recipient',
           ),
         ],
       ),

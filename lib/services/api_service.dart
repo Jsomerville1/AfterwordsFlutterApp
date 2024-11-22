@@ -174,16 +174,32 @@ class ApiService {
   }
 
   // Edit Recipient
-  Future<void> editRecipient(EditRecipientRequest request) async {
+  Future<void> editRecipient({
+    required int recipientId,
+    required String recipientName,
+    required String recipientEmail,
+    int? messageId, // Optional parameter
+  }) async {
     final url = Uri.parse('$baseUrl/api/editRecipient');
+    final body = {
+      'recipientId': recipientId,
+      'recipientName': recipientName,
+      'recipientEmail': recipientEmail,
+    };
+
+    if (messageId != null) {
+      body['messageId'] = messageId;
+    }
+
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(request.toJson()),
+      body: jsonEncode(body),
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Failed to edit recipient');
+      final res = jsonDecode(response.body);
+      throw Exception(res['error'] ?? 'Failed to edit recipient');
     }
   }
 
@@ -341,6 +357,96 @@ class ApiService {
     }
   }
 
+
+  // Forgot Password
+  Future<void> forgotPassword(String email) async {
+    final url = Uri.parse('$baseUrl/pw/forgotpassword');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'Email': email}),
+    );
+
+    if (response.statusCode == 200) {
+      // Password reset token sent successfully
+      return;
+    } else {
+      final res = jsonDecode(response.body);
+      throw Exception(res['error'] ?? 'Failed to send password reset token.');
+    }
+  }
+
+  // Reset Password
+  Future<void> resetPassword(String resetToken, String newPassword) async {
+    final url = Uri.parse('$baseUrl/pw/resetpassword');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'resetToken': resetToken,
+        'newPassword': newPassword,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      // Password reset successfully
+      return;
+    } else {
+      final res = jsonDecode(response.body);
+      throw Exception(res['error'] ?? 'Failed to reset password.');
+    }
+  }
+
+  // Change Password
+  Future<void> changePassword({
+    required int userId,
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final url = Uri.parse('$baseUrl/api/editUser');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'userId': userId,
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+        // 'newEmail': null, // No need to send newEmail
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      // Password changed successfully
+      return;
+    } else {
+      final res = jsonDecode(response.body);
+      throw Exception(res['error'] ?? 'Failed to change password.');
+    }
+  }
+  // Search Recipients
+  Future<List<Recipient>> searchRecipients({
+    required int userId,
+    required String query,
+  }) async {
+    final url = Uri.parse('$baseUrl/api/search');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'userId': userId,
+        'query': query,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      List<dynamic> recipientsJson = data['recipients'];
+      return recipientsJson.map((json) => Recipient.fromJson(json)).toList();
+    } else {
+      final res = jsonDecode(response.body);
+      throw Exception(res['error'] ?? 'Failed to search recipients.');
+    }
+  }
 
 
 }

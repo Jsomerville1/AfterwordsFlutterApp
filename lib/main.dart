@@ -1,8 +1,12 @@
+// lib/main.dart
+
 import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
-import 'utils/shared_pref_manager.dart';
+import 'screens/register_screen.dart';
+import 'screens/reset_password_screen.dart';
+import 'screens/forgot_password_screen.dart';
 import 'screens/main_screen.dart';
-import 'screens/upload_pdf_screen.dart';
+import 'utils/shared_pref_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,7 +54,10 @@ class MyApp extends StatelessWidget {
       home: user != null ? const MainScreen() : const LoginScreen(),
       routes: {
         '/login': (context) => const LoginScreen(),
-        '/uploadPdf': (context) => const UploadPdfScreen(),
+        '/register': (context) => const RegisterScreen(),
+        '/forgotPassword': (context) => const ForgotPasswordScreen(),
+        '/resetPassword': (context) => const ResetPasswordScreen(),
+        '/main': (context) => const MainScreen(),
         // Add other routes if needed
       },
     );

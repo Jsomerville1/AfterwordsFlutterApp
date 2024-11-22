@@ -1,3 +1,5 @@
+
+
 import 'package:flutter/material.dart';
 import '../models/message.dart';
 import '../models/document.dart'; // New import
@@ -47,7 +49,11 @@ class _MessageItemState extends State<MessageItem> {
     if (widget.isPdf) return; // PDFs don't have recipients
     bool? result = await showDialog(
       context: context,
-      builder: (context) => EditRecipientDialog(recipient: recipient),
+      builder: (context) => EditRecipientDialog(
+        recipientId: recipient.recipientId,
+        recipientName: recipient.recipientName,
+        recipientEmail: recipient.recipientEmail,
+      ),
     );
 
     if (result == true) {

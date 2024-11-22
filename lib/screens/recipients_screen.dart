@@ -1,10 +1,14 @@
+// lib/screens/recipients_screen.dart
+
 import 'package:flutter/material.dart';
 import '../models/recipient.dart';
 import '../models/recipient_response.dart';
 import '../models/user.dart';
 import '../services/api_service.dart';
 import '../utils/shared_pref_manager.dart';
-import '../dialogs/edit_recipient_dialog.dart'; // Only import edit dialog
+import '../dialogs/search_recipient_dialog.dart'; // Import the SearchRecipientDialog
+import '../widgets/recipient_item.dart';
+import 'login_screen.dart';
 
 class RecipientsScreen extends StatefulWidget {
   const RecipientsScreen({super.key});
@@ -35,8 +39,7 @@ class _RecipientsScreenState extends State<RecipientsScreen> {
     }
 
     try {
-      RecipientResponse response =
-      await _apiService.getUserRecipients(user.id);
+      RecipientResponse response = await _apiService.getUserRecipients(user.id);
       setState(() {
         _recipients = response.recipients;
         _isLoading = false;
@@ -51,52 +54,15 @@ class _RecipientsScreenState extends State<RecipientsScreen> {
     }
   }
 
-  void _showEditRecipientDialog(Recipient recipient) async {
+  void _showSearchRecipientDialog() async {
     bool? result = await showDialog(
       context: context,
-      builder: (context) => EditRecipientDialog(recipient: recipient),
+      builder: (context) => const SearchRecipientDialog(),
     );
 
     if (result == true) {
-      _fetchRecipients();
+      _fetchRecipients(); // Refresh the recipients list after editing
     }
-  }
-
-  void _deleteRecipient(int recipientId) async {
-    try {
-      await _apiService.deleteRecipient(recipientId);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Recipient deleted successfully')),
-      );
-      _fetchRecipients();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error deleting recipient: ${e.toString()}')),
-      );
-    }
-  }
-
-  void _confirmDeleteRecipient(int recipientId) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Recipient'),
-        content: const Text('Are you sure you want to delete this recipient?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context), // Cancel
-            child: const Text('No'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // Close the dialog
-              _deleteRecipient(recipientId);
-            },
-            child: const Text('Yes'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -104,6 +70,13 @@ class _RecipientsScreenState extends State<RecipientsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Recipients'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: _isLoading ? null : _showSearchRecipientDialog,
+            tooltip: 'Search and Edit Recipient',
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -113,32 +86,12 @@ class _RecipientsScreenState extends State<RecipientsScreen> {
         itemCount: _recipients.length,
         itemBuilder: (context, index) {
           final recipient = _recipients[index];
-          return ListTile(
-            title: Text(recipient.recipientName),
-            subtitle: Text(recipient.recipientEmail),
-            trailing: PopupMenuButton<String>(
-              onSelected: (value) {
-                if (value == 'edit') {
-                  _showEditRecipientDialog(recipient);
-                } else if (value == 'delete') {
-                  _confirmDeleteRecipient(recipient.recipientId);
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'edit',
-                  child: Text('Edit'),
-                ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Text('Delete'),
-                ),
-              ],
-            ),
+          return RecipientItem(
+            recipient: recipient,
+            onUpdate: _fetchRecipients, // Pass the update callback
           );
         },
       ),
-      // Removed the FloatingActionButton for adding recipients
     );
   }
 }

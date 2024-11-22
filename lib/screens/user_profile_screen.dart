@@ -1,8 +1,11 @@
+// lib/screens/user_profile_screen.dart
+
 import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../services/api_service.dart';
 import '../utils/shared_pref_manager.dart';
 import 'login_screen.dart';
+import 'change_password_screen.dart'; // Import the ChangePasswordScreen
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -40,8 +43,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       );
     }
   }
-
-
 
   void _logout() async {
     await _sharedPrefManager.clearUser();
@@ -103,7 +104,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
-
   void _updateCheckInFreq(int newFreq) async {
     if (_user == null) return;
 
@@ -128,6 +128,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
+  void _navigateToChangePassword() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ChangePasswordScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_user == null) {
@@ -136,65 +143,101 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       );
     }
 
+    // Define button style
+    ButtonStyle buttonStyle = ElevatedButton.styleFrom(
+      minimumSize: const Size(200, 50), // Set the width and height
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8.0), // Slightly rounded edges
+      ),
+      textStyle: const TextStyle(fontSize: 16),
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('User Profile'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Welcome, ${_user!.firstName} ${_user!.lastName}',
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Text('User ID: ${_user!.id}'),
-            const SizedBox(height: 8),
-            Text('Username: ${_user!.username}'),
-            const SizedBox(height: 8),
-            Text('Email: ${_user!.email}'),
-            const SizedBox(height: 8),
-            Text(
-              'Check-In Frequency: ${_selectedFrequency ?? '2 Minutes'}',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _selectedFrequency,
-              items: _checkInOptions.keys.map((String key) {
-                return DropdownMenuItem<String>(
-                  value: key,
-                  child: Text(key),
-                );
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  int newFreq = _checkInOptions[value]!;
-                  setState(() {
-                    _selectedFrequency = value;
-                  });
-                  _updateCheckInFreq(newFreq);
-                }
-              },
-              decoration: const InputDecoration(
-                labelText: 'Change Check-In Frequency',
-                border: OutlineInputBorder(),
+      body: Center( // Center the content vertically and horizontally
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            // Center all children horizontally
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                'Welcome, ${_user!.firstName} ${_user!.lastName}',
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
               ),
-            ),
-        const SizedBox(height: 8),
-        ElevatedButton(
-          onPressed: _logout,
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
-          child: const Text('Logout'),
-        ),
-        const SizedBox(height: 8),
-        ElevatedButton(
-          onPressed: _deleteAccount,
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-          child: const Text('Delete Account'),
-        )],
+              const SizedBox(height: 16),
+              // Removed User ID display here
+              Text(
+                'Username: ${_user!.username}',
+                style: const TextStyle(fontSize: 18),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Email: ${_user!.email}',
+                style: const TextStyle(fontSize: 18),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Check-In Frequency: ${_selectedFrequency ?? '2 Minutes'}',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedFrequency,
+                items: _checkInOptions.keys.map((String key) {
+                  return DropdownMenuItem<String>(
+                    value: key,
+                    child: Text(key),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    int newFreq = _checkInOptions[value]!;
+                    setState(() {
+                      _selectedFrequency = value;
+                    });
+                    _updateCheckInFreq(newFreq);
+                  }
+                },
+                decoration: const InputDecoration(
+                  labelText: 'Change Check-In Frequency',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Buttons Section
+              Column(
+                children: [
+                  ElevatedButton(
+                    onPressed: _navigateToChangePassword,
+                    style: buttonStyle.copyWith(
+                      backgroundColor: WidgetStateProperty.all<Color>(Colors.deepPurple),
+                    ),
+                    child: const Text('Change Password'),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: _logout,
+                    style: buttonStyle.copyWith(
+                      backgroundColor: WidgetStateProperty.all<Color>(Colors.deepPurple),
+                    ),
+                    child: const Text('Logout'),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: _deleteAccount,
+                    style: buttonStyle.copyWith(
+                      backgroundColor: WidgetStateProperty.all<Color>(Colors.purple),
+                    ),
+                    child: const Text('Delete Account'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
