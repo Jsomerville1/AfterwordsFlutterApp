@@ -87,31 +87,94 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return Scaffold(
-      body: Column(
-        children: [
-          // Check In Button
-          GestureDetector(
-            onTap: _isCheckingIn ? null : _checkInUser,
-            child: Container(
-              width: double.infinity,
-              height: MediaQuery.of(context).size.height * 0.2, // 1/5 of the view
-              color: Colors.grey[800],
-              alignment: Alignment.center,
-              child: _isCheckingIn
-                  ? const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              )
-                  : const Text(
-                'Check In',
-                style: TextStyle(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0), // Adds padding around the content
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // App Title
+              Text(
+                'Afterwords',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
                   color: Colors.white,
-                  fontSize: 24,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8), // Spacing between title and quote
+
+              // Quote
+              Text(
+                '"Prepare your important thoughts, ready to reach others when the time comes."',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontStyle: FontStyle.italic,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32), // Spacing between quote and button
+
+              // Check-In Button
+              SizedBox(
+                width: double.infinity, // Makes the button stretch horizontally
+                height: 60, // Fixed height for consistency
+                child: ElevatedButton(
+                  onPressed: _isCheckingIn ? null : _checkInUser,
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white, backgroundColor: Colors.purple[200], // Button text color
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12), // Rounded corners
+                    ),
+                    elevation: 5, // Shadow elevation
+                  ),
+                  child: _isCheckingIn
+                      ? const CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  )
+                      : const Text(
+                    'Check In',
+                    style: TextStyle(
+                      fontSize: 20, // Larger text size
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
-            ),
+
+              const SizedBox(height: 24), // Spacing between button and info box
+
+              // Information Box
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16.0), // Padding inside the box
+                decoration: BoxDecoration(
+                  color: Colors.white10, // Background color of the box
+                  borderRadius: BorderRadius.circular(12), // Rounded corners
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.3), // Light grey shadow
+                      spreadRadius: 2,
+                      blurRadius: 8,
+                      offset: const Offset(0, 3), // Changes position of shadow
+                    ),
+                  ],
+                ),
+                child: Text(
+                  "Login to the app regularly, or use the 'Check In' button to prevent messages from being sent",
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.white,
+                    fontSize: 16,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+
+              // Optional: Additional content can go here
+              // For example, displaying user information or other widgets
+            ],
           ),
-          // Additional content can go here
-        ],
+        ),
       ),
     );
   }
